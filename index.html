@@ -1,3 +1,5 @@
+---
+---
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
@@ -10,14 +12,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css" />
+  <!-- Jekyll-safe + cache-busting to fix refresh/caching issues -->
+  <link rel="stylesheet" href="{{ '/styles.css' | relative_url }}?v={{ site.time | date: '%s' }}" />
 </head>
 
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <img class="brand-logo" src="logo.png" alt="AMIGOS logo">
+        <img class="brand-logo" src="{{ '/logo.png' | relative_url }}" alt="AMIGOS logo">
         <div class="brand-meta">
           <div class="brand-title">AMIGOS</div>
           <div class="brand-sub">الامتثال — قائمة عدم المطابقة ونتائج الإغلاق</div>
@@ -155,7 +158,7 @@
                 <option value="info">معلومة</option>
               </select>
 
-              <!-- Admin-only (viewer should see closed-only in your app.js) -->
+              <!-- Admin-only -->
               <select id="filterState" class="input input-sm adminOnly hidden">
                 <option value="all">كل الحالات</option>
                 <option value="open">مفتوحة</option>
@@ -318,6 +321,8 @@
 
   <!-- XLSX parser -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="app.js"></script>
+
+  <!-- Jekyll-safe + cache-busting to fix refresh/caching issues -->
+  <script src="{{ '/app.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 </body>
 </html>
