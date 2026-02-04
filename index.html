@@ -1,13 +1,14 @@
 <!doctype html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AMIGOS — Non‑Conformities & Corrective Actions</title>
+  <title>AMIGOS — عدم المطابقة والإجراءات التصحيحية</title>
 
+  <!-- Fonts (Arabic + Latin) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -19,61 +20,80 @@
         <img class="brand-logo" src="logo.png" alt="AMIGOS logo">
         <div class="brand-meta">
           <div class="brand-title">AMIGOS</div>
-          <div class="brand-sub">Compliance — Non‑Conformities checklist & closure results</div>
+          <div class="brand-sub">الامتثال — قائمة عدم المطابقة ونتائج الإغلاق</div>
         </div>
       </div>
 
       <div class="topbar-actions">
-        <button id="btnExportCSV" class="btn btn-primary" type="button">Export (CSV)</button>
-        <button id="btnExportJSON" class="btn btn-ghost" type="button">Export (JSON)</button>
-        <button id="btnReset" class="btn btn-ghost-danger" type="button" title="Clear saved states on this browser">Reset</button>
+        <!-- Admin access (Viewer by default) -->
+        <button id="adminBtn" class="btn btn-primary" type="button">دخول المسؤول</button>
+        <button id="logoutBtn" class="btn btn-ghost hidden" type="button">تسجيل الخروج</button>
+
+        <!-- Admin-only exports/reset -->
+        <button id="btnExportCSV" class="btn btn-primary adminOnly hidden" type="button">تصدير (CSV)</button>
+        <button id="btnExportJSON" class="btn btn-ghost adminOnly hidden" type="button">تصدير (JSON)</button>
+        <button id="btnReset" class="btn btn-ghost-danger adminOnly hidden" type="button" title="مسح الحالات المحفوظة على هذا المتصفح">إعادة ضبط</button>
       </div>
     </div>
   </header>
 
   <main class="layout">
     <aside class="sidebar">
-      <div class="nav-title">Workspace</div>
-      <button class="nav-item active" data-view="view-dashboard">Dashboard</button>
-      <button class="nav-item" data-view="view-nc">Non‑Conformities</button>
-      <button class="nav-item" data-view="view-exports">Exports & Notes</button>
+      <div class="nav-title">مساحة العمل</div>
+      <button class="nav-item active" data-view="view-dashboard">لوحة التحكم</button>
+      <button class="nav-item" data-view="view-nc">عدم المطابقة (NC)</button>
+      <button class="nav-item" data-view="view-references">المراجع (القانون والسياسات)</button>
+      <button class="nav-item" data-view="view-exports">التصدير وملاحظات المراجع</button>
 
       <div class="side-card">
-        <div class="side-card-title">Load the report</div>
-        <div class="field">
-          <label for="sheetUrl">Google Sheet URL</label>
-          <input id="sheetUrl" class="input" type="url" spellcheck="false" />
-          <div class="row">
-            <button id="btnLoadSheet" class="btn btn-dark" type="button">Load</button>
-          </div>
-          <div class="hint">
-            If it fails (private / blocked), export XLSX and upload below.
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="fileInput">Upload XLSX/CSV</label>
-          <input id="fileInput" class="input" type="file" accept=".xlsx,.xls,.csv" />
+        <div class="side-card-title">وضع العرض</div>
+        <div id="modeText" class="hint">
+          أنت في <strong>وضع المشاهدة</strong>: يتم عرض <strong>عدم المطابقة المغلقة فقط</strong>.
+          للتعديل أو رفع الأدلة يلزم دخول المسؤول.
         </div>
 
         <div class="divider"></div>
 
-        <div class="field">
-          <label>Display</label>
-          <label class="toggle">
-            <input id="toggleOnlyNC" type="checkbox" checked />
-            <span>Show only Non‑Conformities</span>
-          </label>
+        <!-- Admin-only: Load report / upload / display toggles -->
+        <div class="adminOnly hidden">
+          <div class="side-card-title">تحميل التقرير (للمسؤول)</div>
 
-          <label class="toggle">
-            <input id="toggleRequireEvidence" type="checkbox" checked />
-            <span>Evidence required for closure</span>
-          </label>
+          <div class="field">
+            <label for="sheetUrl">رابط Google Sheet</label>
+            <input id="sheetUrl" class="input" type="url" spellcheck="false" />
+            <div class="row">
+              <button id="btnLoadSheet" class="btn btn-dark" type="button">تحميل</button>
+            </div>
+            <div class="hint">
+              إذا فشل التحميل (خاص/محجوب)، قم بتصدير XLSX ثم ارفعه أدناه.
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="fileInput">رفع XLSX/CSV</label>
+            <input id="fileInput" class="input" type="file" accept=".xlsx,.xls,.csv" />
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="field">
+            <label>العرض</label>
+            <label class="toggle">
+              <input id="toggleOnlyNC" type="checkbox" checked />
+              <span>إظهار عدم المطابقة (NC) فقط</span>
+            </label>
+
+            <label class="toggle">
+              <input id="toggleRequireEvidence" type="checkbox" checked />
+              <span>اشتراط وجود دليل لإغلاق NC</span>
+            </label>
+          </div>
         </div>
       </div>
 
       <div class="side-foot muted">
-        Local progress is saved in your browser (localStorage).
+        يتم حفظ التقدّم محلياً في المتصفح (localStorage).<br>
+        AMIGOS — corrective actions tracker (client-only).
       </div>
     </aside>
 
@@ -82,9 +102,9 @@
       <section id="view-dashboard" class="view">
         <div class="hero">
           <div class="hero-left">
-            <div class="hero-title">Corrective Action Tracker</div>
+            <div class="hero-title">متتبّع الإجراءات التصحيحية</div>
             <div id="reportMeta" class="hero-sub">
-              Load the “Compliance Report AMIGOS” to generate a Non‑Conformity checklist.
+              حمّل “Compliance Report AMIGOS” لإنشاء قائمة عدم المطابقة ومتابعة نتائج الإغلاق.
             </div>
           </div>
           <div class="hero-right">
@@ -92,7 +112,7 @@
               <div class="ring">
                 <div class="ring-inner">
                   <div id="ringPct" class="ring-pct">—</div>
-                  <div class="ring-label muted">Closed</div>
+                  <div class="ring-label muted">مغلقة</div>
                 </div>
               </div>
             </div>
@@ -101,19 +121,19 @@
 
         <div class="kpis">
           <div class="kpi">
-            <div class="kpi-label">Total items</div>
+            <div class="kpi-label">إجمالي العناصر</div>
             <div id="kpiTotal" class="kpi-value">—</div>
           </div>
           <div class="kpi">
-            <div class="kpi-label">Non‑Conformities (NC)</div>
+            <div class="kpi-label">عدم المطابقة (NC)</div>
             <div id="kpiNC" class="kpi-value">—</div>
           </div>
           <div class="kpi">
-            <div class="kpi-label">Closed (Conform)</div>
+            <div class="kpi-label">مغلقة (مطابق)</div>
             <div id="kpiClosed" class="kpi-value">—</div>
           </div>
           <div class="kpi">
-            <div class="kpi-label">Open / In progress</div>
+            <div class="kpi-label">مفتوحة / قيد التنفيذ</div>
             <div id="kpiOpen" class="kpi-value">—</div>
           </div>
         </div>
@@ -121,25 +141,27 @@
         <div class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-title">Closure progress</div>
+              <div class="panel-title">تقدّم الإغلاق</div>
               <div id="progressText" class="muted">—</div>
             </div>
             <div class="filters">
-              <input id="searchInput" class="input input-sm" type="text" placeholder="Search NC (category / finding / requirement)…" />
+              <input id="searchInput" class="input input-sm" type="text" placeholder="ابحث في NC (الفئة / الملاحظة / المتطلب)…" />
               <select id="filterSeverity" class="input input-sm">
-                <option value="all">All severities</option>
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-                <option value="info">Info</option>
+                <option value="all">كل الشدّات</option>
+                <option value="critical">حرج</option>
+                <option value="high">عالي</option>
+                <option value="medium">متوسط</option>
+                <option value="low">منخفض</option>
+                <option value="info">معلومة</option>
               </select>
-              <select id="filterState" class="input input-sm">
-                <option value="all">All states</option>
-                <option value="open">Open</option>
-                <option value="progress">In progress</option>
-                <option value="ready">Ready for verification</option>
-                <option value="closed">Closed</option>
+
+              <!-- Admin-only (viewer should see closed-only in your app.js) -->
+              <select id="filterState" class="input input-sm adminOnly hidden">
+                <option value="all">كل الحالات</option>
+                <option value="open">مفتوحة</option>
+                <option value="progress">قيد التنفيذ</option>
+                <option value="ready">جاهزة للتحقق</option>
+                <option value="closed">مغلقة</option>
               </select>
             </div>
           </div>
@@ -149,7 +171,7 @@
           </div>
 
           <div id="dashboardList" class="list">
-            <div class="empty">Load a report to see Non‑Conformities.</div>
+            <div class="empty">قم بتحميل تقرير لعرض عدم المطابقة.</div>
           </div>
         </div>
       </section>
@@ -159,15 +181,59 @@
         <div class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-title">Non‑Conformities checklist</div>
+              <div class="panel-title">قائمة عدم المطابقة (NC)</div>
               <div class="muted">
-                Each NC closes only when the checklist meets closure requirements.
+                يتم إغلاق كل NC فقط عندما تستوفي قائمة التحقق متطلبات الإغلاق (بما فيها الدليل عند اشتراطه).
               </div>
             </div>
           </div>
 
           <div id="ncList" class="list">
-            <div class="empty">Load a report to display NC checklist cards.</div>
+            <div class="empty">حمّل تقريراً لعرض بطاقات قائمة عدم المطابقة.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- REFERENCES -->
+      <section id="view-references" class="view hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">المراجع — روابط مباشرة للمصادر</div>
+              <div class="muted">روابط PDF مباشرة للنصوص والسياسات المرجعية.</div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="card-lite">
+              <div class="card-lite-title">القانون المغربي</div>
+              <ul class="muted">
+                <li>
+                  📄 مدونة الشغل (قانون 65-99) — النص الكامل PDF (بما في ذلك التعديلات):
+                  <a href="https://www.cour-constitutionnelle.ma/Documents/Lois/%D9%85%D8%AF%D9%88%D9%86%D8%A9%20%D8%A7%D9%84%D8%B4%D8%BA%D9%84.pdf"
+                     target="_blank" rel="noopener">
+                    فتح الملف
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <div class="card-lite">
+              <div class="card-lite-title">سياسات Inditex</div>
+              <ul class="muted">
+                <li>
+                  📄 Inditex — Code of Conduct for Manufacturers and Suppliers (PDF):
+                  <a href="https://www.inditex.com/itxcomweb/api/media/8cd88d29-0571-43d5-a6c3-a6c34671e4c1/inditex_code_of_conduct_for_manufacturers_and_suppliers.pdf"
+                     target="_blank" rel="noopener">
+                    فتح الملف
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="hint" style="padding: 0 16px 16px;">
+            ملاحظة: يمكن ربط كل NC ببند محدد عبر إضافة رابط المرجع ضمن بيانات الـ NC (وفق منطق app.js).
           </div>
         </div>
       </section>
@@ -177,34 +243,34 @@
         <div class="panel">
           <div class="panel-head">
             <div>
-              <div class="panel-title">Exports & reviewer notes</div>
+              <div class="panel-title">التصدير وملاحظات المراجع</div>
               <div class="muted">
-                Export CSV/JSON from the header buttons. JSON keeps full checklist structure.
+                يمكن للمسؤول تصدير CSV/JSON من أزرار الأعلى. JSON يحفظ بنية قائمة التحقق كاملة.
               </div>
             </div>
           </div>
 
           <div class="two-col">
             <div class="card-lite">
-              <div class="card-lite-title">Closure rule (current)</div>
+              <div class="card-lite-title">قاعدة الإغلاق (الحالية)</div>
               <ul class="muted">
-                <li>All checklist items must be completed.</li>
-                <li>Verification must be checked.</li>
-                <li>If “Evidence required” is ON: evidence link or evidence note is required.</li>
+                <li>يجب إكمال جميع عناصر قائمة التحقق.</li>
+                <li>يجب تفعيل خيار “تم التحقق”.</li>
+                <li>إذا كان “اشتراط الدليل” مفعلاً: يلزم رابط دليل أو ملاحظة دليل.</li>
               </ul>
               <div class="hint">
-                After you upload the real sheet, I’ll align these rules exactly to your Moroccan law & Inditex interpretation fields.
+                بعد رفع الملف الحقيقي، يمكن مواءمة هذه القواعد بدقة حسب حقول القانون المغربي وسياسات Inditex داخل التقرير.
               </div>
             </div>
 
             <div class="card-lite">
-              <div class="card-lite-title">What to attach as evidence</div>
+              <div class="card-lite-title">ما الذي يمكن إرفاقه كدليل</div>
               <ul class="muted">
-                <li>Ticket/Change request link</li>
-                <li>Photo / before-after screenshot</li>
-                <li>Policy update reference</li>
-                <li>Training attendance proof</li>
-                <li>Maintenance / inspection record</li>
+                <li>رابط تذكرة/طلب تغيير</li>
+                <li>صورة / لقطة شاشة قبل-بعد</li>
+                <li>مرجع تحديث سياسة</li>
+                <li>إثبات حضور تدريب</li>
+                <li>سجل صيانة / تفتيش</li>
               </ul>
             </div>
           </div>
@@ -216,6 +282,39 @@
       </footer>
     </section>
   </main>
+
+  <!-- Admin Login Modal -->
+  <dialog id="loginDialog" class="dialog">
+    <form method="dialog" class="dialogCard" id="loginForm">
+      <div class="dialogHeader">
+        <h3 class="dialogTitle">دخول المسؤول</h3>
+        <button class="iconBtn" type="button" id="closeLoginDialog" aria-label="إغلاق">×</button>
+      </div>
+
+      <div class="dialogBody">
+        <div class="field">
+          <label for="adminCode">اسم المستخدم</label>
+          <input id="adminCode" class="input" autocomplete="off" placeholder="مثال: SARA" />
+        </div>
+
+        <div class="field">
+          <label for="adminPass">كلمة المرور</label>
+          <input id="adminPass" class="input" type="password" placeholder="••••••••" />
+        </div>
+
+        <div class="error hidden" id="loginError">اسم المستخدم أو كلمة المرور غير صحيحة.</div>
+
+        <div class="hint">
+          الوصول المسموح به للتعديل وإغلاق NC (Admin) محصور في حسابين فقط (مُعرّفين داخل app.js).
+        </div>
+      </div>
+
+      <div class="dialogFooter">
+        <button class="btn btn-ghost" type="button" id="cancelLogin">إلغاء</button>
+        <button class="btn btn-primary" type="submit">دخول</button>
+      </div>
+    </form>
+  </dialog>
 
   <!-- XLSX parser -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
