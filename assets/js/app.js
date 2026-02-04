@@ -10,9 +10,17 @@
  *  - User: SARA1 | Password: AMIGOS 555
  *
  * Note: Client-only authentication (UI-level). Not a secure backend auth.
+ *
+ * IMPORTANT:
+ * - File name must be exactly: app.js (NOT app.je)
+ * - Place app.js in the repo root (same level as index.html)
  */
 
-const APP_VERSION = "v2.3.0";
+const APP_VERSION = "v2.3.1";
+
+/* Debug: helps confirm the newest JS is loaded (refresh/cache issues) */
+console.log(`[AMIGOS] app.js loaded — ${APP_VERSION} — ${new Date().toISOString()}`);
+window.AMIGOS_APP_VERSION = APP_VERSION;
 
 /* ---------------- Direct source links (PDF) ---------------- */
 const MOROCCO_LAW_PDF =
@@ -135,8 +143,8 @@ function updateUIForMode() {
   const username = sessionStorage.getItem(SESSION_USER_KEY) || "";
 
   // Buttons
-  if (els.adminBtn) els.adminBtn.classList.toggle("hidden", admin);
-  if (els.logoutBtn) els.logoutBtn.classList.toggle("hidden", !admin);
+  els.adminBtn?.classList.toggle("hidden", admin);
+  els.logoutBtn?.classList.toggle("hidden", !admin);
 
   // Toggle all adminOnly blocks
   document.querySelectorAll(".adminOnly").forEach((el) => {
@@ -172,10 +180,8 @@ function openLogin() {
   try {
     els.loginDialog.showModal();
   } catch {
-    // fallback
     els.loginDialog.setAttribute("open", "open");
   }
-
   setTimeout(() => els.adminCode?.focus(), 50);
 }
 
@@ -287,7 +293,6 @@ function init() {
   // Options
   els.toggleOnlyNC?.addEventListener("change", () => render());
   els.toggleRequireEvidence?.addEventListener("change", () => {
-    // Important: keep checklist.evidence aligned when rule changes
     syncEvidenceChecklistForAll();
     saveProgress(state.progress);
     render();
@@ -328,19 +333,12 @@ function init() {
     render();
   });
 
-  // Initial render
   render();
 }
 
 /* ============================================================
    Data loading + parsing
    ============================================================ */
-
-/**
- * Item model (normalized)
- * id, category, finding, recommendation, severity, isNC,
- * reqMorocco, reqInditex, rawStatus
- */
 
 function setEmpty(message) {
   const html = `<div class="empty">${escapeHtml(message)}</div>`;
@@ -430,10 +428,6 @@ function parseXlsx(arrayBuffer) {
   return { items, meta: { type: "xlsx", sheet: name } };
 }
 
-/**
- * Key goal: show checklist for NON‑CONFORMITIES only.
- * We detect NC using status/conformity columns if present, else keyword heuristics.
- */
 function mapRowsToItems(rows) {
   if (!rows || !rows.length) return [];
 
@@ -499,15 +493,12 @@ function mapRowsToItems(rows) {
       isNC,
     });
 
-    // Ensure progress state exists (create for all items so closure state is stable)
     if (!state.progress[id]) {
       state.progress[id] = defaultProgressForItem();
     }
   }
 
-  // Keep evidence checklist aligned if rule is ON
   syncEvidenceChecklistForAll();
-
   saveProgress(state.progress);
   return items;
 }
@@ -537,7 +528,6 @@ function detectNonConformity({ rawStatus, finding, recommendation }) {
   const s = String(rawStatus ?? "").toLowerCase();
   const f = `${finding ?? ""} ${recommendation ?? ""}`.toLowerCase();
 
-  // Strong signals from status-like fields
   const ncWords = [
     "non conform",
     "non-conform",
@@ -558,7 +548,6 @@ function detectNonConformity({ rawStatus, finding, recommendation }) {
     if (okWords.some((w) => s === w || s.includes(w))) return false;
   }
 
-  // Heuristic fallback (weak): if text clearly says non-compliant
   if (["non conform", "non-compliant", "not compliant", "non compliant", "violation", "غير مطابق"].some((w) => f.includes(w))) {
     return true;
   }
@@ -571,9 +560,8 @@ function detectNonConformity({ rawStatus, finding, recommendation }) {
    ============================================================ */
 
 function render() {
-  // Keep evidence checkbox aligned (important when data already has evidence)
+  // keep evidence checkbox aligned
   syncEvidenceChecklistForAll();
-
   renderKPIs();
   renderLists();
 }
@@ -611,16 +599,13 @@ function renderKPIs() {
 
   const all = state.items.slice();
   const allNC = all.filter((x) => x.isNC);
-
   const baseItems = admin ? allNC : allNC.filter((x) => getClosureState(x) === "closed");
 
   const totalItems = admin ? all.length : baseItems.length;
   const ncCount = baseItems.length;
 
   const closed = baseItems.filter((x) => getClosureState(x) === "closed").length;
-  const open = admin
-    ? allNC.length - allNC.filter((x) => getClosureState(x) === "closed").length
-    : 0;
+  const open = admin ? allNC.length - allNC.filter((x) => getClosureState(x) === "closed").length : 0;
 
   if (els.kpiTotal) els.kpiTotal.textContent = String(totalItems || 0);
   if (els.kpiNC) els.kpiNC.textContent = String(ncCount || 0);
@@ -678,13 +663,7 @@ function renderLists() {
 
 function severityLabel(sev) {
   const s = (sev || "info").toLowerCase();
-  const map = {
-    critical: "حرج",
-    high: "عالي",
-    medium: "متوسط",
-    low: "منخفض",
-    info: "معلومة",
-  };
+  const map = { critical: "حرج", high: "عالي", medium: "متوسط", low: "منخفض", info: "معلومة" };
   return map[s] || "معلومة";
 }
 
@@ -702,11 +681,7 @@ function renderEvidenceFilesList(p) {
           <div class="muted">${name} ${size ? `— ${escapeHtml(size)}` : ""}</div>
           <div class="row" style="gap:8px;">
             ${href ? `<a class="btn btn-dark" href="${href}" download="${escapeAttr(f.name || "evidence")}">تحميل</a>` : ""}
-            ${
-              isAdmin()
-                ? `<button class="btn btn-ghost-danger js-evRemove" type="button" data-ev-idx="${idx}">حذف</button>`
-                : ""
-            }
+            ${isAdmin() ? `<button class="btn btn-ghost-danger js-evRemove" type="button" data-ev-idx="${idx}">حذف</button>` : ""}
           </div>
         </div>
       `;
@@ -724,7 +699,7 @@ function renderCard(item) {
   const roHint = admin ? "" : `<div class="hint">وضع المشاهدة: البيانات للعرض فقط.</div>`;
 
   const resultLabel = stKey === "closed" ? "مطابق (مغلقة)" : "غير مطابق (غير مغلقة)";
-  const checklist = p.checklist;
+  const checklist = p.checklist || {};
 
   return `
     <article class="nc-card" data-id="${escapeAttr(item.id)}">
@@ -791,4 +766,562 @@ function renderCard(item) {
 
             <div class="field">
               <label>رابط الدليل (تذكرة / Drive / صورة / مستند)</label>
-              <input class="input js-evidenceLink" type="url" 
+              <input class="input js-evidenceLink" type="url" placeholder="https://..."
+                value="${escapeAttr(p.evidenceLink || "")}" ${dis}>
+            </div>
+
+            <div class="field">
+              <label>ملاحظة دليل (إذا لا يوجد رابط)</label>
+              <textarea class="input js-evidenceNote" placeholder="صف الدليل: ما الذي تغير؟ أين؟ من تحقق؟…" ${dis}>${escapeHtml(p.evidenceNote || "")}</textarea>
+            </div>
+
+            <div class="field">
+              <label>رفع ملفات الدليل (اختياري)</label>
+              <input class="input js-evidenceFiles" type="file" multiple accept="image/*,application/pdf" ${dis}>
+              <div class="hint">حد: ${MAX_EVIDENCE_FILES} ملفات / ${MAX_EVIDENCE_MB_EACH}MB لكل ملف.</div>
+
+              ${isAdmin() ? `
+                <div class="row" style="margin-top:8px;">
+                  <button class="btn btn-ghost-danger js-evClear" type="button">مسح ملفات الدليل</button>
+                </div>
+              ` : ""}
+
+              <div class="card-lite" style="margin-top:10px;">
+                <div class="card-lite-title">ملفات الدليل</div>
+                ${renderEvidenceFilesList(p)}
+              </div>
+            </div>
+
+            <div class="field">
+              <label>المسؤول</label>
+              <input class="input js-owner" type="text" placeholder="الاسم / القسم"
+                value="${escapeAttr(p.owner || "")}" ${dis}>
+            </div>
+
+            <div class="row">
+              <div class="field" style="flex:1">
+                <label>تاريخ الاستحقاق</label>
+                <input class="input js-dueDate" type="date" value="${escapeAttr(p.dueDate || "")}" ${dis}>
+              </div>
+              <div class="field" style="flex:1">
+                <label>آخر تحديث</label>
+                <input class="input" type="text" value="${escapeAttr(formatDateTime(p.updatedAtISO))}" disabled>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>تعليق المراجع</label>
+              <textarea class="input js-comment" placeholder="ملاحظات CAPA / متابعة…" ${dis}>${escapeHtml(p.comment || "")}</textarea>
+            </div>
+
+            <div class="hint">
+              تصبح الحالة <b>مغلقة</b> فقط عند استكمال العناصر الأساسية + التحقق + اعتماد الإدارة
+              ${els.toggleRequireEvidence?.checked ? " + وجود دليل." : "."}
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function checkRow(key, label, checked, disAttr) {
+  return `
+    <label class="check">
+      <input class="js-check" data-key="${escapeAttr(key)}" type="checkbox" ${checked ? "checked" : ""} ${disAttr}>
+      <span>${escapeHtml(label)}</span>
+    </label>
+  `;
+}
+
+/* ============================================================
+   Card events (ADMIN ONLY)
+   ============================================================ */
+
+function bindCardEvents() {
+  if (!isAdmin()) return;
+
+  const cards = document.querySelectorAll(".nc-card");
+  cards.forEach((card) => {
+    const id = card.getAttribute("data-id");
+    const item = state.items.find((x) => x.id === id);
+    if (!item) return;
+
+    const p = state.progress[id] || defaultProgressForItem();
+
+    // checklist toggles
+    card.querySelectorAll(".js-check").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const k = cb.dataset.key;
+        p.checklist[k] = cb.checked;
+
+        // Keep evidence aligned when rule is ON (unless admin manually toggled evidence)
+        if (k !== "evidence") autoSetEvidenceChecklist(p);
+
+        touchProgress(id, p);
+        if (!saveProgress(state.progress)) alert("تعذر حفظ التغييرات (قد تكون مساحة التخزين ممتلئة).");
+        render();
+      });
+    });
+
+    // evidence link/note
+    const evidenceLink = card.querySelector(".js-evidenceLink");
+    evidenceLink?.addEventListener("input", () => {
+      p.evidenceLink = evidenceLink.value.trim();
+      autoSetEvidenceChecklist(p);
+      touchProgress(id, p);
+      saveProgress(state.progress);
+      renderKPIs();
+    });
+
+    const evidenceNote = card.querySelector(".js-evidenceNote");
+    evidenceNote?.addEventListener("input", () => {
+      p.evidenceNote = evidenceNote.value;
+      autoSetEvidenceChecklist(p);
+      touchProgress(id, p);
+      saveProgress(state.progress);
+      renderKPIs();
+    });
+
+    // evidence file uploads
+    const evidenceFiles = card.querySelector(".js-evidenceFiles");
+    evidenceFiles?.addEventListener("change", async () => {
+      const files = Array.from(evidenceFiles.files || []);
+      evidenceFiles.value = "";
+      if (!files.length) return;
+
+      try {
+        const skipped = await addEvidenceFilesToProgress(p, files);
+        autoSetEvidenceChecklist(p);
+        touchProgress(id, p);
+
+        if (!saveProgress(state.progress)) {
+          alert("تعذر حفظ ملفات الدليل (قد تكون مساحة التخزين ممتلئة). جرّب ملفات أصغر أو استخدم رابط دليل.");
+        } else {
+          if (skipped > 0) alert(`تم تجاهل ${skipped} ملف(ات) بسبب الحجم/الحد.`);
+          render();
+        }
+      } catch (err) {
+        console.error(err);
+        alert("تعذر معالجة ملفات الدليل.");
+      }
+    });
+
+    // clear evidence files
+    const evClear = card.querySelector(".js-evClear");
+    evClear?.addEventListener("click", () => {
+      if (!confirm("هل تريد مسح جميع ملفات الدليل لهذا الـ NC؟")) return;
+      p.evidenceFiles = [];
+      autoSetEvidenceChecklist(p);
+      touchProgress(id, p);
+      saveProgress(state.progress);
+      render();
+    });
+
+    // remove single evidence file
+    card.querySelectorAll(".js-evRemove").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.getAttribute("data-ev-idx"));
+        if (!Number.isFinite(idx)) return;
+        p.evidenceFiles.splice(idx, 1);
+        autoSetEvidenceChecklist(p);
+        touchProgress(id, p);
+        saveProgress(state.progress);
+        render();
+      });
+    });
+
+    // other fields
+    const owner = card.querySelector(".js-owner");
+    owner?.addEventListener("input", () => {
+      p.owner = owner.value;
+      touchProgress(id, p);
+      saveProgress(state.progress);
+    });
+
+    const dueDate = card.querySelector(".js-dueDate");
+    dueDate?.addEventListener("change", () => {
+      p.dueDate = dueDate.value;
+      touchProgress(id, p);
+      saveProgress(state.progress);
+    });
+
+    const comment = card.querySelector(".js-comment");
+    comment?.addEventListener("input", () => {
+      p.comment = comment.value;
+      touchProgress(id, p);
+      saveProgress(state.progress);
+    });
+
+    // Requirement refs & reco (persist report edits locally too)
+    const moroccoRef = card.querySelector(".js-moroccoRef");
+    moroccoRef?.addEventListener("input", () => {
+      item.reqMorocco = moroccoRef.value;
+      saveData({ items: state.items, loadedAtISO: state.loadedAt ? state.loadedAt.toISOString() : null, source: state.source, appVersion: APP_VERSION });
+    });
+
+    const inditexRef = card.querySelector(".js-inditexRef");
+    inditexRef?.addEventListener("input", () => {
+      item.reqInditex = inditexRef.value;
+      saveData({ items: state.items, loadedAtISO: state.loadedAt ? state.loadedAt.toISOString() : null, source: state.source, appVersion: APP_VERSION });
+    });
+
+    const reco = card.querySelector(".js-reco");
+    reco?.addEventListener("input", () => {
+      item.recommendation = reco.value;
+      saveData({ items: state.items, loadedAtISO: state.loadedAt ? state.loadedAt.toISOString() : null, source: state.source, appVersion: APP_VERSION });
+    });
+  });
+}
+
+async function addEvidenceFilesToProgress(p, files) {
+  p.evidenceFiles = Array.isArray(p.evidenceFiles) ? p.evidenceFiles : [];
+  let skipped = 0;
+
+  for (const f of files) {
+    if (p.evidenceFiles.length >= MAX_EVIDENCE_FILES) { skipped++; continue; }
+
+    const mb = f.size / (1024 * 1024);
+    if (mb > MAX_EVIDENCE_MB_EACH) { skipped++; continue; }
+
+    const dataUrl = await fileToDataUrl(f);
+    p.evidenceFiles.push({
+      name: f.name,
+      type: f.type,
+      size: f.size,
+      dataUrl,
+      uploadedAtISO: new Date().toISOString(),
+    });
+  }
+
+  return skipped;
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(String(fr.result));
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+}
+
+function autoSetEvidenceChecklist(p) {
+  const requireEvidence = !!els.toggleRequireEvidence?.checked;
+  if (!requireEvidence) return;
+  p.checklist.evidence = hasEvidence(p);
+}
+
+function hasEvidence(p) {
+  const linkOk = (p.evidenceLink || "").trim().length > 8;
+  const noteOk = (p.evidenceNote || "").trim().length >= 20;
+  const filesOk = Array.isArray(p.evidenceFiles) && p.evidenceFiles.length > 0;
+  return linkOk || noteOk || filesOk;
+}
+
+function syncEvidenceChecklistForAll() {
+  const requireEvidence = !!els.toggleRequireEvidence?.checked;
+  if (!requireEvidence) return;
+
+  for (const id of Object.keys(state.progress || {})) {
+    const p = state.progress[id];
+    if (!p || !p.checklist) continue;
+    p.checklist.evidence = hasEvidence(p);
+  }
+}
+
+/**
+ * Closure states:
+ * - open: nothing done
+ * - progress: partial checklist
+ * - ready: almost done
+ * - closed: base checklist + verification + signoff (+ evidence if required)
+ */
+function getClosureState(item) {
+  if (!item.isNC) return "closed";
+
+  const p = state.progress[item.id] || defaultProgressForItem();
+  const c = p.checklist || {};
+  const requireEvidence = !!els.toggleRequireEvidence?.checked;
+
+  const requiredKeys = ["containment", "rootCause", "correctiveAction", "preventiveAction", "verification", "managementSignoff"];
+  const baseAllDone = requiredKeys.every((k) => !!c[k]);
+
+  const evidenceOk = !requireEvidence || (c.evidence && hasEvidence(p));
+  const allDone = baseAllDone && evidenceOk;
+
+  const anyDone = Object.values(c).some(Boolean);
+
+  if (!anyDone) return "open";
+  if (allDone) return "closed";
+
+  const missing = requiredKeys.filter((k) => !c[k]);
+  if (missing.length === 1 && (missing[0] === "managementSignoff" || missing[0] === "verification")) return "ready";
+  if (requireEvidence && !evidenceOk && baseAllDone) return "ready";
+
+  return "progress";
+}
+
+function touchProgress(id, p) {
+  p.updatedAtISO = new Date().toISOString();
+  state.progress[id] = p;
+}
+
+/* ============================================================
+   Exports (ADMIN ONLY)
+   ============================================================ */
+
+function exportCSV() {
+  if (!state.items.length) return alert("لا يوجد تقرير محمّل.");
+
+  const headers = [
+    "ID","IsNC","Category","Finding","Severity",
+    "MoroccoLawRef","InditexRef","Recommendation",
+    "State","Result",
+    "Owner","DueDate",
+    "EvidenceLink","EvidenceNote",
+    "EvidenceFilesCount","EvidenceFilesNames",
+    "Containment","RootCause","CorrectiveAction","PreventiveAction","Evidence","Verification","ManagementSignoff",
+    "UpdatedAt"
+  ];
+
+  const lines = [headers.join(",")];
+
+  for (const it of state.items) {
+    const p = state.progress[it.id] || defaultProgressForItem();
+    const st = getClosureState(it);
+    const result = it.isNC ? (st === "closed" ? "CONFORM" : "NON-CONFORM") : "CONFORM";
+
+    const files = Array.isArray(p.evidenceFiles) ? p.evidenceFiles : [];
+    const names = files.map((f) => f.name).filter(Boolean).join(" | ");
+
+    const row = [
+      it.id,
+      it.isNC ? "YES" : "NO",
+      it.category,
+      it.finding,
+      it.severity,
+      it.reqMorocco || "",
+      it.reqInditex || "",
+      it.recommendation || "",
+      st,
+      result,
+      p.owner || "",
+      p.dueDate || "",
+      p.evidenceLink || "",
+      p.evidenceNote || "",
+      String(files.length),
+      names,
+      bool(p.checklist.containment),
+      bool(p.checklist.rootCause),
+      bool(p.checklist.correctiveAction),
+      bool(p.checklist.preventiveAction),
+      bool(p.checklist.evidence),
+      bool(p.checklist.verification),
+      bool(p.checklist.managementSignoff),
+      p.updatedAtISO || "",
+    ].map(csvCell);
+
+    lines.push(row.join(","));
+  }
+
+  downloadBlob(
+    new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" }),
+    `AMIGOS_NC_Corrections_${new Date().toISOString().slice(0,10)}.csv`
+  );
+}
+
+function exportJSON() {
+  if (!state.items.length) return alert("لا يوجد تقرير محمّل.");
+
+  const payload = {
+    license: "AMIGOS — corrective actions tracker (client-only).",
+    appVersion: APP_VERSION,
+    reportName: state.reportName,
+    loadedAt: state.loadedAt?.toISOString() || null,
+    source: state.source,
+    requireEvidenceForClosure: !!els.toggleRequireEvidence?.checked,
+    items: state.items,
+    progress: state.progress,
+    sourceLinks: {
+      moroccoLawPdf: MOROCCO_LAW_PDF,
+      inditexCocPdf: INDITEX_COC_PDF,
+    },
+  };
+
+  downloadBlob(
+    new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" }),
+    `AMIGOS_NC_Corrections_${new Date().toISOString().slice(0,10)}.json`
+  );
+}
+
+/* ============================================================
+   Storage (progress + last loaded data)
+   ============================================================ */
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveProgress(obj) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj || {}));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(DATA_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveData(data) {
+  try {
+    localStorage.setItem(DATA_KEY, JSON.stringify(data || null));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+
+function extractSheetId(url) {
+  const m = String(url).match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  return m ? m[1] : null;
+}
+
+function normalizeSeverity(sev) {
+  const s = String(sev ?? "").toLowerCase().trim();
+  if (!s) return "info";
+
+  // Arabic severities
+  if (s.includes("حرج")) return "critical";
+  if (s.includes("عالي")) return "high";
+  if (s.includes("متوسط")) return "medium";
+  if (s.includes("منخفض")) return "low";
+  if (s.includes("معلومة")) return "info";
+
+  // English severities
+  if (s.includes("crit")) return "critical";
+  if (s.includes("high")) return "high";
+  if (s.includes("med")) return "medium";
+  if (s.includes("low")) return "low";
+  if (s.includes("info")) return "info";
+
+  // numeric priorities
+  if (["1","p1"].includes(s)) return "critical";
+  if (["2","p2"].includes(s)) return "high";
+  if (["3","p3"].includes(s)) return "medium";
+  if (["4","p4"].includes(s)) return "low";
+
+  return "info";
+}
+
+function summarizeFallback(obj) {
+  const pairs = Object.entries(obj)
+    .map(([k, v]) => [String(k).trim(), String(v ?? "").trim()])
+    .filter(([k, v]) => k && v);
+  return pairs.slice(0, 3).map(([k, v]) => `${k}: ${v}`).join(" • ") || "—";
+}
+
+function findKey(keys, candidates) {
+  const normalized = new Map(keys.map((k) => [norm(k), k]));
+  for (const c of candidates) {
+    const hit = normalized.get(norm(c));
+    if (hit) return hit;
+  }
+  for (const c of candidates) {
+    const nc = norm(c);
+    for (const k of keys) {
+      const nk = norm(k);
+      if (nk.includes(nc) || nc.includes(nk)) return k;
+    }
+  }
+  return null;
+}
+
+function norm(s) {
+  return String(s ?? "").toLowerCase().replace(/[\s\-_()]/g, "").trim();
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const next = text[i + 1];
+
+    if (ch === '"' && inQuotes && next === '"') { cell += '"'; i++; continue; }
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+
+    if (ch === "," && !inQuotes) { row.push(cell); cell = ""; continue; }
+    if ((ch === "\n" || ch === "\r") && !inQuotes) {
+      if (ch === "\r" && next === "\n") i++;
+      row.push(cell); rows.push(row);
+      row = []; cell = "";
+      continue;
+    }
+    cell += ch;
+  }
+
+  row.push(cell); rows.push(row);
+  return rows.filter((r) => r.some((c) => String(c).trim() !== ""));
+}
+
+function csvCell(v) {
+  const s = String(v ?? "");
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s).replaceAll("`", "&#096;");
+}
+
+function bool(x) {
+  return x ? "YES" : "NO";
+}
+
+function formatDateTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString();
+}
