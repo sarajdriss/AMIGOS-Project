@@ -14,6 +14,7 @@
   --ok: #16a34a;
 
   --shadow: 0 14px 34px rgba(10, 24, 54, .08);
+  --shadow2: 0 18px 45px rgba(10, 24, 54, .12);
   --radius: 16px;
 }
 
@@ -32,6 +33,9 @@ body{
 
 /* Ensure form controls use same font */
 button, input, select, textarea{ font: inherit; }
+
+/* Images */
+img{ max-width: 100%; display:block; }
 
 /* Links */
 a{ color: var(--primary); text-decoration: none; }
@@ -66,6 +70,10 @@ a:hover{ text-decoration: underline; }
   justify-content: space-between;
   gap: 14px;
 }
+/* IMPORTANT: RTL topbar should be reversed to look professional */
+html[dir="rtl"] .topbar-inner{
+  flex-direction: row-reverse;
+}
 
 .brand{ display:flex; align-items:center; gap: 12px; min-width: 220px; }
 .brand-meta{ display:flex; flex-direction: column; }
@@ -81,7 +89,12 @@ a:hover{ text-decoration: underline; }
 .brand-title{ font-weight: 900; letter-spacing: .2px; }
 .brand-sub{ font-size: 12.5px; color: var(--muted); margin-top: 3px; }
 
-.topbar-actions{ display:flex; gap: 10px; flex-wrap: wrap; }
+.topbar-actions{
+  display:flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
 
 /* Layout */
 .layout{
@@ -121,6 +134,12 @@ html[dir="rtl"] .layout{
   letter-spacing: .12em;
   margin-bottom: 10px;
 }
+/* Arabic looks better without uppercase spacing */
+html[dir="rtl"] .nav-title{
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 .nav-item{
   width: 100%;
   text-align: left;
@@ -149,7 +168,7 @@ html[dir="rtl"] .nav-item{ text-align: right; }
 }
 .side-card-title{ font-weight: 900; margin-bottom: 10px; }
 
-.side-foot{ margin-top: 12px; font-size: 12px; }
+.side-foot{ margin-top: 12px; font-size: 12px; color: var(--muted); }
 
 .divider{
   height: 1px;
@@ -172,12 +191,17 @@ html[dir="rtl"] .nav-item{ text-align: right; }
   align-items: center;
   gap: 16px;
 }
+/* IMPORTANT: RTL hero should be reversed (title block on right, ring on left) */
+html[dir="rtl"] .hero{
+  flex-direction: row-reverse;
+}
+
 .hero-title{
   font-size: 20px;
   font-weight: 900;
   letter-spacing: -0.02em;
 }
-.hero-sub{ margin-top: 6px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.hero-sub{ margin-top: 6px; color: var(--muted); font-size: 13px; line-height: 1.6; }
 
 /* Progress ring */
 .progress-ring .ring{
@@ -199,7 +223,7 @@ html[dir="rtl"] .nav-item{ text-align: right; }
   border: 1px solid rgba(230,236,247,.7);
 }
 .ring-pct{ font-weight: 900; font-size: 18px; }
-.ring-label{ font-size: 12px; margin-top: 2px; }
+.ring-label{ font-size: 12px; margin-top: 2px; color: var(--muted); }
 
 /* KPIs */
 .kpis{
@@ -236,12 +260,16 @@ html[dir="rtl"] .nav-item{ text-align: right; }
   gap: 14px;
   flex-wrap: wrap;
 }
+html[dir="rtl"] .panel-head{
+  flex-direction: row-reverse;
+}
 .panel-title{ font-weight: 900; }
 
 .filters{
   display:flex;
   gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 /* Progress bar */
@@ -275,8 +303,9 @@ html[dir="rtl"] .nav-item{ text-align: right; }
 .nc-card{
   border-radius: 16px;
   border: 1px solid var(--border);
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  background: #fff;
   overflow: hidden;
+  box-shadow: 0 10px 22px rgba(10,24,54,.06);
 }
 .nc-card-head{
   padding: 14px 14px 10px;
@@ -284,9 +313,16 @@ html[dir="rtl"] .nav-item{ text-align: right; }
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+  border-bottom: 1px solid rgba(230,236,247,.8);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
 }
+html[dir="rtl"] .nc-card-head{
+  flex-direction: row-reverse;
+}
+
 .nc-title{ font-weight: 900; }
-.nc-sub{ margin-top: 6px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.nc-sub{ margin-top: 6px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
 .pills{
   display:flex;
   gap: 8px;
@@ -313,7 +349,7 @@ html[dir="rtl"] .pills{ justify-content: flex-start; }
 .pill.state-closed{ background: rgba(22,163,74,.10); border-color: rgba(22,163,74,.22); }
 .pill.state-open{ background: rgba(47,111,237,.08); border-color: rgba(47,111,237,.18); }
 
-.nc-card-body{ padding: 0 14px 14px; }
+.nc-card-body{ padding: 14px; }
 
 .nc-grid{
   display:grid;
@@ -331,6 +367,7 @@ html[dir="rtl"] .pills{ justify-content: flex-start; }
 .block-title{ font-weight: 900; margin-bottom: 8px; }
 .muted{ color: var(--muted); }
 
+/* Checklist */
 .checklist{ display:flex; flex-direction: column; gap: 10px; }
 .check{
   display:flex;
@@ -338,7 +375,7 @@ html[dir="rtl"] .pills{ justify-content: flex-start; }
   gap: 10px;
   font-weight: 800;
 }
-.check input{ width: 18px; height: 18px; margin-top: 1px; }
+.check input{ width: 18px; height: 18px; margin-top: 2px; }
 
 /* Fields */
 .field{ margin-top: 10px; }
@@ -456,13 +493,14 @@ textarea.input{ min-height: 90px; resize: vertical; }
   border-radius: 16px;
   background: #fbfdff;
   padding: 14px;
+  box-shadow: 0 8px 16px rgba(10,24,54,.04);
 }
 .card-lite-title{ font-weight: 900; margin-bottom: 8px; }
 
 .card-lite ul{ margin: 0; }
 html[dir="rtl"] .card-lite ul{ padding-right: 18px; padding-left: 0; }
 
-.footer{ margin-top: 14px; padding: 10px 4px; font-size: 12px; }
+.footer{ margin-top: 14px; padding: 10px 4px; font-size: 12px; color: var(--muted); }
 
 /* ---------------- Dialog (Admin login) ---------------- */
 dialog{
@@ -484,7 +522,7 @@ dialog::backdrop{
   border-radius: 18px;
   border: 1px solid var(--border);
   background: rgba(255,255,255,.98);
-  box-shadow: 0 20px 60px rgba(10,24,54,.20);
+  box-shadow: var(--shadow2);
   overflow: hidden;
 }
 
