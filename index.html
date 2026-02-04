@@ -3,171 +3,221 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AMIGOS — Compliance Report Corrections</title>
+  <title>AMIGOS — Non‑Conformities & Corrective Actions</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="styles.css" />
 </head>
 
 <body>
-  <header class="app-header">
-    <div class="header-inner">
+  <header class="topbar">
+    <div class="topbar-inner">
       <div class="brand">
-        <img class="brand-logo" src="logo.png" alt="AMIGOS logo" />
-        <div class="brand-text">
+        <img class="brand-logo" src="logo.png" alt="AMIGOS logo">
+        <div class="brand-meta">
           <div class="brand-title">AMIGOS</div>
-          <div class="brand-subtitle">Compliance Report — Findings & Corrections</div>
+          <div class="brand-sub">Compliance — Non‑Conformities checklist & closure results</div>
         </div>
       </div>
 
-      <div class="header-actions">
-        <button id="btnExport" class="btn btn-primary" type="button" title="Export corrections to CSV">
-          Export Results (CSV)
-        </button>
-        <button id="btnReset" class="btn btn-ghost" type="button" title="Clear saved correction state on this device">
-          Reset Saved State
-        </button>
+      <div class="topbar-actions">
+        <button id="btnExportCSV" class="btn btn-primary" type="button">Export (CSV)</button>
+        <button id="btnExportJSON" class="btn btn-ghost" type="button">Export (JSON)</button>
+        <button id="btnReset" class="btn btn-ghost-danger" type="button" title="Clear saved states on this browser">Reset</button>
       </div>
     </div>
   </header>
 
-  <main class="container">
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Load Report</h2>
-        <p class="muted">
-          Load from Google Sheets (XLSX export) or upload an XLSX/CSV file.
-        </p>
-      </div>
+  <main class="layout">
+    <aside class="sidebar">
+      <div class="nav-title">Workspace</div>
+      <button class="nav-item active" data-view="view-dashboard">Dashboard</button>
+      <button class="nav-item" data-view="view-nc">Non‑Conformities</button>
+      <button class="nav-item" data-view="view-exports">Exports & Notes</button>
 
-      <div class="load-grid">
+      <div class="side-card">
+        <div class="side-card-title">Load the report</div>
         <div class="field">
-          <label for="sheetUrl">Google Sheet link (or just keep the default)</label>
+          <label for="sheetUrl">Google Sheet URL</label>
+          <input id="sheetUrl" class="input" type="url" spellcheck="false" />
           <div class="row">
-            <input id="sheetUrl" class="input" type="url" spellcheck="false"
-              placeholder="https://docs.google.com/spreadsheets/d/…/edit" />
-            <button id="btnLoad" class="btn btn-secondary" type="button">Load</button>
+            <button id="btnLoadSheet" class="btn btn-dark" type="button">Load</button>
           </div>
           <div class="hint">
-            Tip: the app will use Google’s <code>export?format=xlsx</code> endpoint automatically.
+            If it fails (private / blocked), export XLSX and upload below.
           </div>
         </div>
 
         <div class="field">
           <label for="fileInput">Upload XLSX/CSV</label>
           <input id="fileInput" class="input" type="file" accept=".xlsx,.xls,.csv" />
-          <div class="hint">If the sheet is private / blocked, export it and upload here.</div>
-        </div>
-      </div>
-    </section>
-
-    <section class="kpi-grid">
-      <div class="kpi">
-        <div class="kpi-label">Total Findings</div>
-        <div id="kpiTotal" class="kpi-value">—</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">Corrected</div>
-        <div id="kpiCorrected" class="kpi-value">—</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">Remaining</div>
-        <div id="kpiRemaining" class="kpi-value">—</div>
-      </div>
-      <div class="kpi">
-        <div class="kpi-label">Compliance Progress</div>
-        <div id="kpiProgress" class="kpi-value">—</div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-title row-between wrap">
-        <div>
-          <h2>Findings</h2>
-          <p id="reportMeta" class="muted">No report loaded yet.</p>
         </div>
 
-        <div class="controls">
-          <div class="control">
-            <label class="control-label" for="searchInput">Search</label>
-            <input id="searchInput" class="input input-sm" type="text" placeholder="Search category / finding / recommendation…" />
-          </div>
+        <div class="divider"></div>
 
-          <div class="control">
-            <label class="control-label" for="filterStatus">Status</label>
-            <select id="filterStatus" class="input input-sm">
-              <option value="all">All</option>
-              <option value="corrected">Corrected</option>
-              <option value="open">Open</option>
-            </select>
-          </div>
+        <div class="field">
+          <label>Display</label>
+          <label class="toggle">
+            <input id="toggleOnlyNC" type="checkbox" checked />
+            <span>Show only Non‑Conformities</span>
+          </label>
 
-          <div class="control">
-            <label class="control-label" for="filterSeverity">Severity</label>
-            <select id="filterSeverity" class="input input-sm">
-              <option value="all">All</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-              <option value="info">Info</option>
-            </select>
+          <label class="toggle">
+            <input id="toggleRequireEvidence" type="checkbox" checked />
+            <span>Evidence required for closure</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="side-foot muted">
+        Local progress is saved in your browser (localStorage).
+      </div>
+    </aside>
+
+    <section class="content">
+      <!-- DASHBOARD -->
+      <section id="view-dashboard" class="view">
+        <div class="hero">
+          <div class="hero-left">
+            <div class="hero-title">Corrective Action Tracker</div>
+            <div id="reportMeta" class="hero-sub">
+              Load the “Compliance Report AMIGOS” to generate a Non‑Conformity checklist.
+            </div>
+          </div>
+          <div class="hero-right">
+            <div class="progress-ring">
+              <div class="ring">
+                <div class="ring-inner">
+                  <div id="ringPct" class="ring-pct">—</div>
+                  <div class="ring-label muted">Closed</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="progress-wrap">
-        <div class="progress-bar">
-          <div id="progressFill" class="progress-fill" style="width:0%"></div>
+        <div class="kpis">
+          <div class="kpi">
+            <div class="kpi-label">Total items</div>
+            <div id="kpiTotal" class="kpi-value">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Non‑Conformities (NC)</div>
+            <div id="kpiNC" class="kpi-value">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Closed (Conform)</div>
+            <div id="kpiClosed" class="kpi-value">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Open / In progress</div>
+            <div id="kpiOpen" class="kpi-value">—</div>
+          </div>
         </div>
-        <div id="progressText" class="progress-text muted">—</div>
-      </div>
 
-      <div class="table-wrap">
-        <table class="table" aria-label="Compliance findings table">
-          <thead>
-            <tr>
-              <th class="col-id">ID</th>
-              <th class="col-cat">Category</th>
-              <th>Finding</th>
-              <th class="col-sev">Severity</th>
-              <th>Recommendation</th>
-              <th class="col-corr">Corrected</th>
-            </tr>
-          </thead>
-          <tbody id="tbody">
-            <tr>
-              <td colspan="6" class="empty">Load a report to see findings.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Closure progress</div>
+              <div id="progressText" class="muted">—</div>
+            </div>
+            <div class="filters">
+              <input id="searchInput" class="input input-sm" type="text" placeholder="Search NC (category / finding / requirement)…" />
+              <select id="filterSeverity" class="input input-sm">
+                <option value="all">All severities</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+                <option value="info">Info</option>
+              </select>
+              <select id="filterState" class="input input-sm">
+                <option value="all">All states</option>
+                <option value="open">Open</option>
+                <option value="progress">In progress</option>
+                <option value="ready">Ready for verification</option>
+                <option value="closed">Closed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="bar">
+            <div id="barFill" class="bar-fill" style="width:0%"></div>
+          </div>
+
+          <div id="dashboardList" class="list">
+            <div class="empty">Load a report to see Non‑Conformities.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NON-CONFORMITIES -->
+      <section id="view-nc" class="view hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Non‑Conformities checklist</div>
+              <div class="muted">
+                Each NC closes only when the checklist meets closure requirements.
+              </div>
+            </div>
+          </div>
+
+          <div id="ncList" class="list">
+            <div class="empty">Load a report to display NC checklist cards.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXPORTS -->
+      <section id="view-exports" class="view hidden">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Exports & reviewer notes</div>
+              <div class="muted">
+                Export CSV/JSON from the header buttons. JSON keeps full checklist structure.
+              </div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="card-lite">
+              <div class="card-lite-title">Closure rule (current)</div>
+              <ul class="muted">
+                <li>All checklist items must be completed.</li>
+                <li>Verification must be checked.</li>
+                <li>If “Evidence required” is ON: evidence link or evidence note is required.</li>
+              </ul>
+              <div class="hint">
+                After you upload the real sheet, I’ll align these rules exactly to your Moroccan law & Inditex interpretation fields.
+              </div>
+            </div>
+
+            <div class="card-lite">
+              <div class="card-lite-title">What to attach as evidence</div>
+              <ul class="muted">
+                <li>Ticket/Change request link</li>
+                <li>Photo / before-after screenshot</li>
+                <li>Policy update reference</li>
+                <li>Training attendance proof</li>
+                <li>Maintenance / inspection record</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer muted">
+        AMIGOS — corrective actions tracker (client-only).
+      </footer>
     </section>
-
-    <section class="panel">
-      <div class="panel-title">
-        <h2>Correction Results</h2>
-        <p class="muted">
-          This section summarizes what’s corrected and what remains. It updates live as you tick checkboxes.
-        </p>
-      </div>
-
-      <div id="resultsBox" class="results">
-        <div class="empty">No report loaded yet.</div>
-      </div>
-    </section>
-
-    <footer class="footer">
-      <div class="muted">
-        AMIGOS Compliance Corrections — local state saved in your browser (localStorage).
-      </div>
-    </footer>
   </main>
 
-  <!-- XLSX parser (SheetJS) -->
+  <!-- XLSX parser -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="app.js"></script>
 </body>
