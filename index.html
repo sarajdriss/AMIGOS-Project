@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Jekyll-safe + cache-busting to fix refresh/caching issues -->
-  <link rel="stylesheet" href="{{ '/styles.css' | relative_url }}?v={{ site.time | date: '%s' }}" />
+  <!-- Jekyll-safe + cache-busting (BEST for GitHub Pages) -->
+  <link rel="stylesheet" href="{{ '/styles.css' | relative_url }}?v={{ site.github.build_revision }}" />
 </head>
 
 <body>
@@ -162,7 +162,7 @@
               <select id="filterState" class="input input-sm adminOnly hidden">
                 <option value="all">كل الحالات</option>
                 <option value="open">مفتوحة</option>
-                <option value="progress">قيد التنفيذ</option>
+                <option value="progress">قي�� التنفيذ</option>
                 <option value="ready">جاهزة للتحقق</option>
                 <option value="closed">مغلقة</option>
               </select>
@@ -322,7 +322,7 @@
   <!-- XLSX parser -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <!-- Jekyll-safe + cache-busting to fix refresh/caching issues -->
-  <script src="{{ '/app.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
+  <!-- Jekyll-safe + cache-busting (BEST for GitHub Pages) -->
+  <script src="{{ '/app.js' | relative_url }}?v={{ site.github.build_revision }}"></script>
 </body>
 </html>
