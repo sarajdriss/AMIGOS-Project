@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AMIGOS — Compliance Report Corrections</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <img class="brand-logo" src="logo.png" alt="AMIGOS logo" />
+        <div class="brand-text">
+          <div class="brand-title">AMIGOS</div>
+          <div class="brand-subtitle">Compliance Report — Findings & Corrections</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btnExport" class="btn btn-primary" type="button" title="Export corrections to CSV">
+          Export Results (CSV)
+        </button>
+        <button id="btnReset" class="btn btn-ghost" type="button" title="Clear saved correction state on this device">
+          Reset Saved State
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div class="panel-title">
+        <h2>Load Report</h2>
+        <p class="muted">
+          Load from Google Sheets (XLSX export) or upload an XLSX/CSV file.
+        </p>
+      </div>
+
+      <div class="load-grid">
+        <div class="field">
+          <label for="sheetUrl">Google Sheet link (or just keep the default)</label>
+          <div class="row">
+            <input id="sheetUrl" class="input" type="url" spellcheck="false"
+              placeholder="https://docs.google.com/spreadsheets/d/…/edit" />
+            <button id="btnLoad" class="btn btn-secondary" type="button">Load</button>
+          </div>
+          <div class="hint">
+            Tip: the app will use Google’s <code>export?format=xlsx</code> endpoint automatically.
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="fileInput">Upload XLSX/CSV</label>
+          <input id="fileInput" class="input" type="file" accept=".xlsx,.xls,.csv" />
+          <div class="hint">If the sheet is private / blocked, export it and upload here.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Total Findings</div>
+        <div id="kpiTotal" class="kpi-value">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Corrected</div>
+        <div id="kpiCorrected" class="kpi-value">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Remaining</div>
+        <div id="kpiRemaining" class="kpi-value">—</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Compliance Progress</div>
+        <div id="kpiProgress" class="kpi-value">—</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title row-between wrap">
+        <div>
+          <h2>Findings</h2>
+          <p id="reportMeta" class="muted">No report loaded yet.</p>
+        </div>
+
+        <div class="controls">
+          <div class="control">
+            <label class="control-label" for="searchInput">Search</label>
+            <input id="searchInput" class="input input-sm" type="text" placeholder="Search category / finding / recommendation…" />
+          </div>
+
+          <div class="control">
+            <label class="control-label" for="filterStatus">Status</label>
+            <select id="filterStatus" class="input input-sm">
+              <option value="all">All</option>
+              <option value="corrected">Corrected</option>
+              <option value="open">Open</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label class="control-label" for="filterSeverity">Severity</label>
+            <select id="filterSeverity" class="input input-sm">
+              <option value="all">All</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+              <option value="info">Info</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill" style="width:0%"></div>
+        </div>
+        <div id="progressText" class="progress-text muted">—</div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table" aria-label="Compliance findings table">
+          <thead>
+            <tr>
+              <th class="col-id">ID</th>
+              <th class="col-cat">Category</th>
+              <th>Finding</th>
+              <th class="col-sev">Severity</th>
+              <th>Recommendation</th>
+              <th class="col-corr">Corrected</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr>
+              <td colspan="6" class="empty">Load a report to see findings.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">
+        <h2>Correction Results</h2>
+        <p class="muted">
+          This section summarizes what’s corrected and what remains. It updates live as you tick checkboxes.
+        </p>
+      </div>
+
+      <div id="resultsBox" class="results">
+        <div class="empty">No report loaded yet.</div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="muted">
+        AMIGOS Compliance Corrections — local state saved in your browser (localStorage).
+      </div>
+    </footer>
+  </main>
+
+  <!-- XLSX parser (SheetJS) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
