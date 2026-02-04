@@ -30,6 +30,9 @@ body{
     var(--bg);
 }
 
+/* Ensure form controls use same font */
+button, input, select, textarea{ font: inherit; }
+
 /* Links */
 a{ color: var(--primary); text-decoration: none; }
 a:hover{ text-decoration: underline; }
@@ -37,6 +40,13 @@ a:hover{ text-decoration: underline; }
 /* Global helpers */
 .hidden{ display:none !important; }
 .view.hidden{ display:none; }
+
+/* Better focus for accessibility */
+:focus-visible{
+  outline: 3px solid rgba(47,111,237,.25);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
 
 /* Topbar */
 .topbar{
@@ -344,6 +354,18 @@ label{ display:block; font-size: 12.5px; color: var(--muted); margin-bottom: 7px
   transition: box-shadow .15s ease, border-color .15s ease;
   color: var(--text);
 }
+
+/* RTL: Arabic fields align right by default */
+html[dir="rtl"] .input{ text-align: right; }
+
+/* Keep URLs, dates and files readable LTR */
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] input[type="date"],
+html[dir="rtl"] input[type="file"]{
+  direction: ltr;
+  text-align: left;
+}
+
 .input:focus{
   border-color: rgba(47,111,237,.55);
   box-shadow: 0 0 0 4px rgba(47,111,237,.10);
@@ -501,7 +523,6 @@ dialog::backdrop{
   border-top: 1px solid var(--border);
   justify-content: flex-start;
 }
-html[dir="rtl"] .dialogFooter{ justify-content: flex-start; }
 
 .error{
   margin-top: 10px;
@@ -511,4 +532,12 @@ html[dir="rtl"] .dialogFooter{ justify-content: flex-start; }
   background: rgba(239,68,68,.06);
   color: #7f1d1d;
   font-weight: 800;
+}
+
+/* Small screens tweaks */
+@media (max-width: 420px){
+  .topbar-inner{ width: calc(100% - 20px); }
+  .brand{ min-width: 0; }
+  .brand-sub{ display:none; }
+  .input-sm{ min-width: 140px; }
 }
