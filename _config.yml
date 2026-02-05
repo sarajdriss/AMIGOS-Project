@@ -1,2 +1,5 @@
 url: "https://sarajdriss.github.io"
 baseurl: "/AMIGOS-Project"
+
+# Optional (helps GitHub Pages/Jekyll behave predictably)
+markdown: kramdown
