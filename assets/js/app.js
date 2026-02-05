@@ -1,4 +1,7 @@
+/* assets/js/app.js */
 /* global XLSX */
+
+"use strict";
 
 /**
  * AMIGOS — corrective actions tracker (client-only)
@@ -11,14 +14,12 @@
  *
  * Note: Client-only authentication (UI-level). Not a secure backend auth.
  *
- * IMPORTANT:
- * - File name must be exactly: app.js (NOT app.je)
- * - Place app.js in the repo root (same level as index.html)
+ * File path: /assets/js/app.js
  */
 
-const APP_VERSION = "v2.3.1";
+const APP_VERSION = "v2.4.0";
 
-/* Debug: helps confirm the newest JS is loaded (refresh/cache issues) */
+/* Debug (helps confirm latest JS is loaded after deploy/cache) */
 console.log(`[AMIGOS] app.js loaded — ${APP_VERSION} — ${new Date().toISOString()}`);
 window.AMIGOS_APP_VERSION = APP_VERSION;
 
@@ -35,7 +36,7 @@ const DEFAULT_SHEET_URL =
 
 /* ---------------- Storage keys ---------------- */
 const STORAGE_KEY = "amigos_nc_tracker_v2_progress"; // checklist progress + evidence
-const DATA_KEY = "amigos_nc_tracker_v2_data"; // last loaded report items/meta (so Viewer can read)
+const DATA_KEY = "amigos_nc_tracker_v2_data"; // last loaded report items/meta (viewer can read)
 
 /* ---------------- Session keys (admin mode) ---------------- */
 const SESSION_ADMIN_KEY = "amigos_nc_tracker_admin";
@@ -48,12 +49,12 @@ const ALLOWED_USERS = [
 ];
 
 /* ---------------- Evidence file limits (localStorage) ---------------- */
-const MAX_EVIDENCE_FILES = 6; // per NC
+const MAX_EVIDENCE_FILES = 6;     // per NC
 const MAX_EVIDENCE_MB_EACH = 2.0; // per file (DataURL stored in localStorage)
 
-/* ---------------- DOM elements ---------------- */
+/* ---------------- DOM ---------------- */
 const els = {
-  // Admin / login UI (from index.html)
+  // Admin / login
   adminBtn: document.getElementById("adminBtn"),
   logoutBtn: document.getElementById("logoutBtn"),
   modeText: document.getElementById("modeText"),
@@ -66,17 +67,17 @@ const els = {
   adminPass: document.getElementById("adminPass"),
   loginError: document.getElementById("loginError"),
 
-  // Load sources
+  // Load sources (admin)
   sheetUrl: document.getElementById("sheetUrl"),
   btnLoadSheet: document.getElementById("btnLoadSheet"),
   fileInput: document.getElementById("fileInput"),
 
-  // Exports / reset (admin only)
+  // Exports / reset (admin)
   btnExportCSV: document.getElementById("btnExportCSV"),
   btnExportJSON: document.getElementById("btnExportJSON"),
   btnReset: document.getElementById("btnReset"),
 
-  // Options (admin only in the new index)
+  // Options (admin)
   toggleOnlyNC: document.getElementById("toggleOnlyNC"),
   toggleRequireEvidence: document.getElementById("toggleRequireEvidence"),
 
@@ -112,17 +113,14 @@ const state = {
   loadedAt: null,
   source: null,
 
-  // parsed rows
-  items: [],
-
-  // local progress per finding id
-  progress: loadProgress(),
+  items: [],       // parsed rows
+  progress: loadProgress(), // per item id
 };
 
 init();
 
 /* ============================================================
-   Admin mode helpers
+   Admin mode
    ============================================================ */
 
 function isAdmin() {
@@ -142,16 +140,13 @@ function updateUIForMode() {
   const admin = isAdmin();
   const username = sessionStorage.getItem(SESSION_USER_KEY) || "";
 
-  // Buttons
   els.adminBtn?.classList.toggle("hidden", admin);
   els.logoutBtn?.classList.toggle("hidden", !admin);
 
-  // Toggle all adminOnly blocks
   document.querySelectorAll(".adminOnly").forEach((el) => {
     el.classList.toggle("hidden", !admin);
   });
 
-  // Mode text (Arabic)
   if (els.modeText) {
     if (admin) {
       els.modeText.innerHTML =
@@ -162,7 +157,7 @@ function updateUIForMode() {
     }
   }
 
-  // Default options for viewer
+  // Viewer defaults
   if (!admin) {
     if (els.toggleOnlyNC) els.toggleOnlyNC.checked = true;
     if (els.toggleRequireEvidence) els.toggleRequireEvidence.checked = true;
@@ -210,11 +205,11 @@ function handleLoginSubmit(e) {
 }
 
 /* ============================================================
-   Init / navigation / events
+   Init / events
    ============================================================ */
 
 function init() {
-  // Load last saved dataset for Viewer
+  // Load last saved dataset so Viewer can see results
   const saved = loadData();
   if (saved?.items?.length) {
     state.items = saved.items;
@@ -222,8 +217,7 @@ function init() {
     state.source = saved.source || null;
 
     if (els.reportMeta) {
-      const rows = state.items.length;
-      els.reportMeta.textContent = `${state.reportName} • تم التحميل (محفوظ محلياً) • ${rows} صف`;
+      els.reportMeta.textContent = `${state.reportName} • تم التحميل (محفوظ محلياً) • ${state.items.length} صف`;
     }
   }
 
@@ -241,20 +235,20 @@ function init() {
     });
   });
 
-  // Admin buttons
+  // Admin controls
   els.adminBtn?.addEventListener("click", openLogin);
   els.logoutBtn?.addEventListener("click", () => setAdminMode(false));
 
-  // Login dialog events
+  // Login dialog
   els.loginForm?.addEventListener("submit", handleLoginSubmit);
   els.closeLoginDialog?.addEventListener("click", closeLogin);
   els.cancelLogin?.addEventListener("click", closeLogin);
 
-  // Load from Google Sheet (ADMIN ONLY)
+  // Load from sheet (admin only)
   els.btnLoadSheet?.addEventListener("click", async () => {
     if (!isAdmin()) return openLogin();
 
-    const url = els.sheetUrl?.value.trim();
+    const url = (els.sheetUrl?.value || "").trim();
     if (!url) return;
 
     setEmpty("جاري تحميل التقرير من Google Sheets…");
@@ -269,7 +263,7 @@ function init() {
     }
   });
 
-  // Upload file (ADMIN ONLY)
+  // Upload file (admin only)
   els.fileInput?.addEventListener("change", async (e) => {
     if (!isAdmin()) {
       if (els.fileInput) els.fileInput.value = "";
@@ -291,19 +285,20 @@ function init() {
   });
 
   // Options
-  els.toggleOnlyNC?.addEventListener("change", () => render());
+  els.toggleOnlyNC?.addEventListener("change", render);
   els.toggleRequireEvidence?.addEventListener("change", () => {
+    // keep evidence checkbox aligned when rule changes
     syncEvidenceChecklistForAll();
     saveProgress(state.progress);
     render();
   });
 
   // Filters
-  els.searchInput?.addEventListener("input", () => render());
-  els.filterSeverity?.addEventListener("change", () => render());
-  els.filterState?.addEventListener("change", () => render());
+  els.searchInput?.addEventListener("input", render);
+  els.filterSeverity?.addEventListener("change", render);
+  els.filterState?.addEventListener("change", render);
 
-  // Exports (ADMIN ONLY)
+  // Exports (admin only)
   els.btnExportCSV?.addEventListener("click", () => {
     if (!isAdmin()) return openLogin();
     exportCSV();
@@ -313,7 +308,7 @@ function init() {
     exportJSON();
   });
 
-  // Reset (ADMIN ONLY)
+  // Reset (admin only)
   els.btnReset?.addEventListener("click", () => {
     if (!isAdmin()) return openLogin();
     if (!confirm("هل تريد إعادة ضبط الحالات المحفوظة على هذا المتصفح؟")) return;
@@ -337,7 +332,7 @@ function init() {
 }
 
 /* ============================================================
-   Data loading + parsing
+   Data loading
    ============================================================ */
 
 function setEmpty(message) {
@@ -371,11 +366,13 @@ async function loadFromGoogleSheetUrl(sheetUrl) {
   if (els.reportMeta) {
     els.reportMeta.textContent = `${state.reportName} • تم التحميل • ${state.items.length} صف`;
   }
+
   render();
 }
 
 async function loadFromLocalFile(file) {
   const ext = file.name.toLowerCase().split(".").pop();
+
   if (ext === "csv") {
     const text = await file.text();
     const rows = parseCsv(text);
@@ -395,6 +392,7 @@ async function loadFromLocalFile(file) {
     if (els.reportMeta) {
       els.reportMeta.textContent = `${state.reportName} • تم التحميل (CSV) • ${items.length} صف`;
     }
+
     render();
     return;
   }
@@ -416,22 +414,27 @@ async function loadFromLocalFile(file) {
   if (els.reportMeta) {
     els.reportMeta.textContent = `${state.reportName} • تم التحميل (XLSX) • ${items.length} صف`;
   }
+
   render();
 }
 
 function parseXlsx(arrayBuffer) {
   const wb = XLSX.read(arrayBuffer, { type: "array" });
-  const name = wb.SheetNames[0];
-  const ws = wb.Sheets[name];
+  const sheetName = wb.SheetNames[0];
+  const ws = wb.Sheets[sheetName];
   const json = XLSX.utils.sheet_to_json(ws, { defval: "" });
   const items = mapRowsToItems(json);
-  return { items, meta: { type: "xlsx", sheet: name } };
+  return { items, meta: { type: "xlsx", sheet: sheetName } };
 }
+
+/* ============================================================
+   Mapping / detection
+   ============================================================ */
 
 function mapRowsToItems(rows) {
   if (!rows || !rows.length) return [];
 
-  // array-of-arrays -> header-based objects
+  // array-of-arrays -> header objects
   if (Array.isArray(rows[0])) {
     const header = rows[0].map((h) => String(h ?? ""));
     rows = rows.slice(1).map((r) => {
@@ -461,22 +464,8 @@ function mapRowsToItems(rows) {
     const severity = normalizeSeverity(get(["severity", "risk", "priority", "criticality", "rating"]));
 
     const rawStatus = get(["status", "conformity", "compliance result", "result", "nc status", "state"]);
-    const reqMorocco = get([
-      "morocco law",
-      "legal reference",
-      "law reference",
-      "moroccan law",
-      "maroc law",
-      "code du travail",
-    ]);
-    const reqInditex = get([
-      "inditex",
-      "inditex reference",
-      "inditex requirement",
-      "code of conduct",
-      "ics",
-      "social audit",
-    ]);
+    const reqMorocco = get(["morocco law", "legal reference", "law reference", "moroccan law", "maroc law", "code du travail"]);
+    const reqInditex = get(["inditex", "inditex reference", "inditex requirement", "code of conduct", "ics", "social audit"]);
 
     const id = idRaw || `F-${String(i + 1).padStart(3, "0")}`;
     const isNC = detectNonConformity({ rawStatus, finding, recommendation });
@@ -493,12 +482,12 @@ function mapRowsToItems(rows) {
       isNC,
     });
 
-    if (!state.progress[id]) {
-      state.progress[id] = defaultProgressForItem();
-    }
+    if (!state.progress[id]) state.progress[id] = defaultProgressForItem();
   }
 
+  // Align evidence checkbox if evidence is required
   syncEvidenceChecklistForAll();
+
   saveProgress(state.progress);
   return items;
 }
@@ -529,17 +518,9 @@ function detectNonConformity({ rawStatus, finding, recommendation }) {
   const f = `${finding ?? ""} ${recommendation ?? ""}`.toLowerCase();
 
   const ncWords = [
-    "non conform",
-    "non-conform",
-    "nonconform",
-    "nc",
-    "nok",
-    "no",
-    "fail",
-    "not compliant",
-    "non compliant",
-    "غير مطابق",
-    "عدم مطابقة",
+    "non conform", "non-conform", "nonconform",
+    "nc", "nok", "fail", "not compliant", "non compliant",
+    "غير مطابق", "عدم مطابقة"
   ];
   const okWords = ["conform", "ok", "yes", "pass", "compliant", "closed", "مطابق", "مغلق", "مغلقة"];
 
@@ -548,7 +529,7 @@ function detectNonConformity({ rawStatus, finding, recommendation }) {
     if (okWords.some((w) => s === w || s.includes(w))) return false;
   }
 
-  if (["non conform", "non-compliant", "not compliant", "non compliant", "violation", "غير مطابق"].some((w) => f.includes(w))) {
+  if (["non compliant", "not compliant", "violation", "غير مطابق", "عدم مطابقة"].some((w) => f.includes(w))) {
     return true;
   }
 
@@ -560,7 +541,6 @@ function detectNonConformity({ rawStatus, finding, recommendation }) {
    ============================================================ */
 
 function render() {
-  // keep evidence checkbox aligned
   syncEvidenceChecklistForAll();
   renderKPIs();
   renderLists();
@@ -574,7 +554,7 @@ function getVisibleItems() {
 
   let items = state.items.slice();
 
-  // Viewer mode: CLOSED NCs only, always
+  // Viewer mode: closed NC only
   if (!isAdmin()) {
     items = items.filter((x) => x.isNC && getClosureState(x) === "closed");
   } else {
@@ -599,24 +579,27 @@ function renderKPIs() {
 
   const all = state.items.slice();
   const allNC = all.filter((x) => x.isNC);
+
   const baseItems = admin ? allNC : allNC.filter((x) => getClosureState(x) === "closed");
 
   const totalItems = admin ? all.length : baseItems.length;
   const ncCount = baseItems.length;
-
   const closed = baseItems.filter((x) => getClosureState(x) === "closed").length;
-  const open = admin ? allNC.length - allNC.filter((x) => getClosureState(x) === "closed").length : 0;
 
-  if (els.kpiTotal) els.kpiTotal.textContent = String(totalItems || 0);
-  if (els.kpiNC) els.kpiNC.textContent = String(ncCount || 0);
-  if (els.kpiClosed) els.kpiClosed.textContent = String(closed || 0);
-  if (els.kpiOpen) els.kpiOpen.textContent = String(open || 0);
+  const open = admin
+    ? allNC.length - allNC.filter((x) => getClosureState(x) === "closed").length
+    : 0;
+
+  els.kpiTotal && (els.kpiTotal.textContent = String(totalItems || 0));
+  els.kpiNC && (els.kpiNC.textContent = String(ncCount || 0));
+  els.kpiClosed && (els.kpiClosed.textContent = String(closed || 0));
+  els.kpiOpen && (els.kpiOpen.textContent = String(open || 0));
 
   const pct = baseItems.length ? Math.round((closed / baseItems.length) * 100) : 0;
 
   if (els.ringPct) els.ringPct.textContent = baseItems.length ? `${pct}%` : "—";
   const ring = document.querySelector(".ring");
-  if (ring) ring.style.setProperty("--ring", `${pct}%`);
+  ring && ring.style.setProperty("--ring", `${pct}%`);
 
   if (els.barFill) els.barFill.style.width = `${pct}%`;
 
@@ -650,13 +633,15 @@ function renderLists() {
     const msg = isAdmin()
       ? "لا توجد عناصر مطابقة للفلاتر."
       : "لا توجد حالات NC مغلقة مطابقة للبحث/الفلاتر.";
-    if (els.dashboardList) els.dashboardList.innerHTML = `<div class="empty">${escapeHtml(msg)}</div>`;
-    if (els.ncList) els.ncList.innerHTML = `<div class="empty">${escapeHtml(msg)}</div>`;
+    els.dashboardList && (els.dashboardList.innerHTML = `<div class="empty">${escapeHtml(msg)}</div>`);
+    els.ncList && (els.ncList.innerHTML = `<div class="empty">${escapeHtml(msg)}</div>`);
     return;
   }
 
-  if (els.dashboardList) els.dashboardList.innerHTML = visible.slice(0, 12).map(renderCard).join("");
-  if (els.ncList) els.ncList.innerHTML = visible.map(renderCard).join("");
+  // Dashboard shows first 12
+  els.dashboardList && (els.dashboardList.innerHTML = visible.slice(0, 12).map(renderCard).join(""));
+  // NC view shows all
+  els.ncList && (els.ncList.innerHTML = visible.map(renderCard).join(""));
 
   bindCardEvents();
 }
@@ -855,11 +840,12 @@ function bindCardEvents() {
         const k = cb.dataset.key;
         p.checklist[k] = cb.checked;
 
-        // Keep evidence aligned when rule is ON (unless admin manually toggled evidence)
         if (k !== "evidence") autoSetEvidenceChecklist(p);
 
         touchProgress(id, p);
-        if (!saveProgress(state.progress)) alert("تعذر حفظ التغييرات (قد تكون مساحة التخزين ممتلئة).");
+        if (!saveProgress(state.progress)) {
+          alert("تعذر حفظ التغييرات (قد تكون مساحة التخزين ممتلئة).");
+        }
         render();
       });
     });
@@ -907,7 +893,7 @@ function bindCardEvents() {
       }
     });
 
-    // clear evidence files
+    // clear evidence
     const evClear = card.querySelector(".js-evClear");
     evClear?.addEventListener("click", () => {
       if (!confirm("هل تريد مسح جميع ملفات الدليل لهذا الـ NC؟")) return;
@@ -918,7 +904,7 @@ function bindCardEvents() {
       render();
     });
 
-    // remove single evidence file
+    // remove one file
     card.querySelectorAll(".js-evRemove").forEach((btn) => {
       btn.addEventListener("click", () => {
         const idx = Number(btn.getAttribute("data-ev-idx"));
@@ -953,36 +939,55 @@ function bindCardEvents() {
       saveProgress(state.progress);
     });
 
-    // Requirement refs & reco (persist report edits locally too)
+    // Persist edits to item fields locally too
     const moroccoRef = card.querySelector(".js-moroccoRef");
     moroccoRef?.addEventListener("input", () => {
       item.reqMorocco = moroccoRef.value;
-      saveData({ items: state.items, loadedAtISO: state.loadedAt ? state.loadedAt.toISOString() : null, source: state.source, appVersion: APP_VERSION });
+      saveDataSnapshot();
     });
 
     const inditexRef = card.querySelector(".js-inditexRef");
     inditexRef?.addEventListener("input", () => {
       item.reqInditex = inditexRef.value;
-      saveData({ items: state.items, loadedAtISO: state.loadedAt ? state.loadedAt.toISOString() : null, source: state.source, appVersion: APP_VERSION });
+      saveDataSnapshot();
     });
 
     const reco = card.querySelector(".js-reco");
     reco?.addEventListener("input", () => {
       item.recommendation = reco.value;
-      saveData({ items: state.items, loadedAtISO: state.loadedAt ? state.loadedAt.toISOString() : null, source: state.source, appVersion: APP_VERSION });
+      saveDataSnapshot();
     });
   });
 }
+
+function saveDataSnapshot() {
+  saveData({
+    items: state.items,
+    loadedAtISO: state.loadedAt ? state.loadedAt.toISOString() : null,
+    source: state.source,
+    appVersion: APP_VERSION,
+  });
+}
+
+/* ============================================================
+   Evidence helpers
+   ============================================================ */
 
 async function addEvidenceFilesToProgress(p, files) {
   p.evidenceFiles = Array.isArray(p.evidenceFiles) ? p.evidenceFiles : [];
   let skipped = 0;
 
   for (const f of files) {
-    if (p.evidenceFiles.length >= MAX_EVIDENCE_FILES) { skipped++; continue; }
+    if (p.evidenceFiles.length >= MAX_EVIDENCE_FILES) {
+      skipped++;
+      continue;
+    }
 
     const mb = f.size / (1024 * 1024);
-    if (mb > MAX_EVIDENCE_MB_EACH) { skipped++; continue; }
+    if (mb > MAX_EVIDENCE_MB_EACH) {
+      skipped++;
+      continue;
+    }
 
     const dataUrl = await fileToDataUrl(f);
     p.evidenceFiles.push({
@@ -1030,23 +1035,27 @@ function syncEvidenceChecklistForAll() {
   }
 }
 
-/**
- * Closure states:
- * - open: nothing done
- * - progress: partial checklist
- * - ready: almost done
- * - closed: base checklist + verification + signoff (+ evidence if required)
- */
+/* ============================================================
+   Closure state
+   ============================================================ */
+
 function getClosureState(item) {
-  if (!item.isNC) return "closed";
+  if (!item.isNC) return "closed"; // info items treated as conform
 
   const p = state.progress[item.id] || defaultProgressForItem();
   const c = p.checklist || {};
   const requireEvidence = !!els.toggleRequireEvidence?.checked;
 
-  const requiredKeys = ["containment", "rootCause", "correctiveAction", "preventiveAction", "verification", "managementSignoff"];
-  const baseAllDone = requiredKeys.every((k) => !!c[k]);
+  const requiredKeys = [
+    "containment",
+    "rootCause",
+    "correctiveAction",
+    "preventiveAction",
+    "verification",
+    "managementSignoff",
+  ];
 
+  const baseAllDone = requiredKeys.every((k) => !!c[k]);
   const evidenceOk = !requireEvidence || (c.evidence && hasEvidence(p));
   const allDone = baseAllDone && evidenceOk;
 
@@ -1156,7 +1165,7 @@ function exportJSON() {
 }
 
 /* ============================================================
-   Storage (progress + last loaded data)
+   Storage
    ============================================================ */
 
 function loadProgress() {
@@ -1191,6 +1200,7 @@ function saveData(data) {
     localStorage.setItem(DATA_KEY, JSON.stringify(data || null));
     return true;
   } catch {
+    // If too large, the report snapshot might fail; progress still saved separately.
     return false;
   }
 }
@@ -1208,21 +1218,21 @@ function normalizeSeverity(sev) {
   const s = String(sev ?? "").toLowerCase().trim();
   if (!s) return "info";
 
-  // Arabic severities
+  // Arabic
   if (s.includes("حرج")) return "critical";
   if (s.includes("عالي")) return "high";
   if (s.includes("متوسط")) return "medium";
   if (s.includes("منخفض")) return "low";
   if (s.includes("معلومة")) return "info";
 
-  // English severities
+  // English
   if (s.includes("crit")) return "critical";
   if (s.includes("high")) return "high";
   if (s.includes("med")) return "medium";
   if (s.includes("low")) return "low";
   if (s.includes("info")) return "info";
 
-  // numeric priorities
+  // Numbers
   if (["1","p1"].includes(s)) return "critical";
   if (["2","p2"].includes(s)) return "high";
   if (["3","p3"].includes(s)) return "medium";
@@ -1240,10 +1250,13 @@ function summarizeFallback(obj) {
 
 function findKey(keys, candidates) {
   const normalized = new Map(keys.map((k) => [norm(k), k]));
+
   for (const c of candidates) {
     const hit = normalized.get(norm(c));
     if (hit) return hit;
   }
+
+  // partial match fallback
   for (const c of candidates) {
     const nc = norm(c);
     for (const k of keys) {
@@ -1251,6 +1264,7 @@ function findKey(keys, candidates) {
       if (nk.includes(nc) || nc.includes(nk)) return k;
     }
   }
+
   return null;
 }
 
@@ -1272,16 +1286,22 @@ function parseCsv(text) {
     if (ch === '"') { inQuotes = !inQuotes; continue; }
 
     if (ch === "," && !inQuotes) { row.push(cell); cell = ""; continue; }
+
     if ((ch === "\n" || ch === "\r") && !inQuotes) {
       if (ch === "\r" && next === "\n") i++;
-      row.push(cell); rows.push(row);
-      row = []; cell = "";
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
       continue;
     }
+
     cell += ch;
   }
 
-  row.push(cell); rows.push(row);
+  row.push(cell);
+  rows.push(row);
+
   return rows.filter((r) => r.some((c) => String(c).trim() !== ""));
 }
 
