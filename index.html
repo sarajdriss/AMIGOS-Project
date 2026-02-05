@@ -1,4 +1,5 @@
 ---
+layout: null
 ---
 <!doctype html>
 <html lang="ar" dir="rtl">
@@ -6,30 +7,33 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>AMIGOS — عدم المطابقة والإجراءات التصحيحية</title>
+  <meta name="description" content="AMIGOS — corrective actions tracker (client-only). عرض نتائج إغلاق حالات عدم المطابقة وإدارة الأدلة عبر وضع المسؤول." />
 
   <!-- Fonts (Arabic + Latin) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  {%- comment -%}
+  {% comment %}
     Cache busting:
-    - On GitHub Pages: site.github.build_revision changes each deploy
-    - Locally: fallback to site.time timestamp
-  {%- endcomment -%}
+    - GitHub Pages: site.github.build_revision changes each deploy
+    - Local: fallback to site.time timestamp
+  {% endcomment %}
   {% assign cache_bust = site.github.build_revision %}
   {% unless cache_bust %}
     {% assign cache_bust = site.time | date: '%s' %}
   {% endunless %}
 
-  <link rel="stylesheet" href="{{ '/styles.css' | relative_url }}?v={{ cache_bust }}" />
+  <!-- Correct paths (assets/) + cache bust -->
+  <link rel="icon" href="{{ '/assets/images/logo.png' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}?v={{ cache_bust }}" />
 </head>
 
 <body>
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <img class="brand-logo" src="{{ '/logo.png' | relative_url }}" alt="AMIGOS logo">
+        <img class="brand-logo" src="{{ '/assets/images/logo.png' | relative_url }}" alt="AMIGOS logo">
         <div class="brand-meta">
           <div class="brand-title">AMIGOS</div>
           <div class="brand-sub">الامتثال — قائمة عدم المطابقة ونتائج الإغلاق</div>
@@ -307,6 +311,7 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="{{ '/app.js' | relative_url }}?v={{ cache_bust }}"></script>
+  <!-- Correct path (assets/) + cache bust -->
+  <script src="{{ '/assets/js/app.js' | relative_url }}?v={{ cache_bust }}"></script>
 </body>
 </html>
